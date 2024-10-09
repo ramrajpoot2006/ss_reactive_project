@@ -1,0 +1,121 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: app
+    environment:
+      ENVIRONMENT: dev
+      LEANIX_ID: af1ddeb1-070c-43b6-8cd4-82c60b18e1b8
+      LOGGING_LEVEL_API: INFO
+      LOGGING_LEVEL_POSTGRES: INFO
+      LOG_BODY: false
+      DB_MIGRATION_PATH: classpath:db/migration
+      # Postgres
+      POSTGRES_WRITER_HOST: postgres
+      POSTGRES_READER_HOST: postgres
+      POSTGRES_ARGS: ssl=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
+      POSTGRES_PORT: 5432
+      POSTGRES_NAME: shipping
+      POSTGRES_WRITER_INITIAL_SIZE: 10
+      POSTGRES_WRITER_MAX_SIZE: 500
+      POSTGRES_WRITER_MAX_IDLE_TIME_MIN: 30
+      POSTGRES_WRITER_MAX_CREATE_CONN_TIME_SEC: 10
+      POSTGRES_READER_INITIAL_SIZE: 10
+      POSTGRES_READER_MAX_SIZE: 500
+      POSTGRES_READER_MAX_IDLE_TIME_MIN: 30
+      POSTGRES_READER_MAX_CREATE_CONN_TIME_SEC: 10
+      # HTTP
+      HTTP_CONNECT_TIMEOUT_MILLIS: 1000
+      HTTP_MAX_CONNECTIONS: 500
+      HTTP_CONN_MAX_IDLE_TIME_SEC: 180
+      HTTP_MAX_CONN_LIFE_TIME_SEC: 180
+      HTTP_ACQUIRE_TIMEOUT_SEC: 60
+      HTTP_EVICT_SEC: 30
+      # Timeouts
+      RESPONSE_TIMEOUT: 5000
+      # Circuit Breaker
+      CIRCUIT_BREAKER_FAILURE_RATE: 30
+      CIRCUIT_BREAKER_OPEN_STATE_MS: 120000
+      CIRCUIT_BREAKER_CHECK_CALLS: 5
+      CIRCUIT_BREAKER_SLIDING_WINDOW: 10
+      CIRCUIT_BREAKER_TIMEOUT_DURATION_MS: 3000
+      # DPE
+      DPE_HOST: https://eaistg.omnihub.3stripes.net
+      DPE_URI: eai/delivery/options/V2
+      DPE_MS_HOST: https://stg-omnideliverypromise.api.3stripes.io
+      DPE_MS_URI: getDeliveryOptions/v2
+      DPE_FAILOVER_HOST: https://dev-omnihub.api.3stripes.io
+      DPE_FAILOVER_URI: deliveryPromise/V2
+      DPE_HTTP_READ_TIMEOUT_MILLIS: 10000
+      # CNC
+      CNC_HOST: https://eaistg.omnihub.3stripes.net 
+      CNC_URI: /eai/clickncollect/availability/V2
+      # SSM
+      SSM_STORE_HOST: https://stg-omni.api.3stripes.io
+      SSM_STORE_URI: ssm/stores
+      SSM_HTTP_READ_TIMEOUT_MILLIS: 3000
+      SSM_STORE_RADIUS: 50km
+      SSM_STORE_PAGE: 0
+      SSM_STORE_PAGE_SIZE: 20
+      # PUDO
+      PUDO_AGG_HOST: https://master-tf-pudo-aggregator.ecom-tf.deu01.k8s.anteater.dub.aws.k8s.3stripes.net
+      PUDO_AGG_URI: location/search
+      PUDO_ID_AGG_URI: location
+      PUDO_AGG_STORE_URI: store
+      PUDO_AGG_HTTP_READ_TIMEOUT_MILLIS: 3000
+      PUDO_AGG_RADIUS: 25000
+      PUDO_AGG_STORE_PAGE: 0
+      PUDO_AGG_STORE_PAGE_SIZE: 20
+      # Google Maps API
+      GOOGLE_API_HOST: https://maps.googleapis.com
+      GOOGLE_API_URI: maps/api/geocode/json
+      GEO_HTTP_READ_TIMEOUT_MILLIS: 3000
+      # OpenTelemetry
+      OTEL_RESOURCE_ATTRIBUTES: service.name=shipping-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otelcol:4317
+      OTEL_INSTRUMENTATION_SPRING_BOOT_ACTUATOR_AUTOCONFIGURE_ENABLED: false
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      # Data
+      
+      MILITARY-STATES-JSON-CONTENT: '{"AA","AE","AP"}'
+      RDS_SHIPPING_USER_USERNAME: shipping
+      RDS_SHIPPING_USER_PASSWORD: shipping
+      DPE_STH_APPID: ${DPE_STH_APPID}
+      DPE_MS_API_KEY: ${DPE_MS_API_KEY}
+      DPE_CNC_APPID: ${DPE_CNC_APPID}
+      DPE_CNC_XAPI_KEY: ${DPE_CNC_XAPI_KEY}
+      DPE_FAILOVER_APPID: ${DPE_FAILOVER_APPID}
+      SSM_STORE_APIKEY: ${SSM_STORE_APIKEY}
+      SSM_STORE_SECRET: ${SSM_STORE_SECRET}
+      PUDO_AGG_AUTHORIZATION: ${PUDO_AGG_AUTHORIZATION}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+    ports:
+      - 8080:8080
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    environment:
+      POSTGRES_USER: shipping
+      POSTGRES_PASSWORD: shipping
+    ports:
+      - 5432:5432
+    volumes:
+      - data:/var/lib/postgresql/data
+
+  otelcol:
+    image: otel/opentelemetry-collector:0.70.0
+    container_name: otelcol
+    command: --config /etc/otelcol-config.yaml
+    volumes:
+      - ./otelcol-config.yaml:/etc/otelcol-config.yaml
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - 9411:9411
+
+volumes:
+  data: {}

@@ -1,0 +1,48 @@
+version: '3.1'
+services:
+
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - 'postgres_data:/data/db'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgre-s3cr3t
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    ports:
+      - 5050:5050
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_LISTEN_PORT: 5050
+
+  flyway:
+    image: flyway/flyway:latest
+    command: -url=jdbc:postgresql://postgres:5432/shipping -user=postgres -password=postgre-s3cr3t migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      - postgres
+
+  redis:
+    container_name: redis
+    image: redis:6
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

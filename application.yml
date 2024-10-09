@@ -1,0 +1,147 @@
+server:
+  port: 8080
+  compression:
+    enabled: true
+
+spring:
+  datasource:
+    username: ${RDS_SHIPPING_USER_USERNAME}
+    password: ${RDS_SHIPPING_USER_PASSWORD}
+  r2dbc:
+    writer:
+      pool:
+        initial-size: ${POSTGRES_WRITER_INITIAL_SIZE:10}
+        max-size: ${POSTGRES_WRITER_MAX_SIZE:20}
+        max-idle-time-minutes: ${POSTGRES_WRITER_MAX_IDLE_TIME_MIN:30}
+        max-create-conn-time-seconds: ${POSTGRES_WRITER_MAX_CREATE_CONN_TIME_SEC:10}
+    reader:
+      pool:
+        initial-size: ${POSTGRES_READER_INITIAL_SIZE:10}
+        max-size: ${POSTGRES_READER_MAX_SIZE:20}
+        max-idle-time-minutes: ${POSTGRES_READER_MAX_IDLE_TIME_MIN:30}
+        max-create-conn-time-seconds: ${POSTGRES_READER_MAX_CREATE_CONN_TIME_SEC:10}
+    requests-mapping:
+      read-only:
+        methods:
+          - method: GET
+            pattern-string: "/**"
+          - method: POST
+            pattern-string: "/shipping-options"
+    username: ${RDS_SHIPPING_USER_USERNAME}
+    reader-host: ${POSTGRES_READER_HOST}
+    password: ${RDS_SHIPPING_USER_PASSWORD}
+    writer-host: ${POSTGRES_WRITER_HOST}
+    port: ${POSTGRES_PORT}
+    database: ${POSTGRES_NAME}
+    maxLifeMillis: ${CONNECTION_MAX_LIFE:42200000}
+  flyway:
+    enabled: false
+    url: jdbc:postgresql://${POSTGRES_WRITER_HOST}:${POSTGRES_PORT}/${POSTGRES_NAME}?user=${RDS_SHIPPING_USER_USERNAME}&password=${RDS_SHIPPING_USER_PASSWORD}
+    locations: ${DB_MIGRATION_PATH}
+  main:
+    web-application-type: reactive
+management:
+  metrics:
+    web:
+      client:
+        request:
+          metric-name: afn_fulfilment_service_http_client_requests
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  health:
+    r2dbc:
+      enabled: false
+  info:
+    env:
+      enabled: true
+logging:
+  level:
+    com.domainname.next.shippingapi: ${LOGGING_LEVEL_API:INFO}
+    org:
+      postgres: ERROR
+  env: ${ENVIRONMENT}
+  leanix-id: ${LEANIX_ID}
+  logBody: ${LOG_BODY:true}
+  sanitize:
+    headers: api_key,api-key,api_id,key,authorization,x-api-key
+    query-param: key
+deliverypromise:
+  host: ${DPE_HOST}
+  uri: ${DPE_URI}
+  appid: ${DPE_STH_APPID}
+deliverypromise-ms:
+  host: ${DPE_MS_HOST}
+  uri: ${DPE_MS_URI}
+  x-api-key: ${DPE_MS_API_KEY}
+dpe-failover:
+  host: ${DPE_FAILOVER_HOST}
+  uri: ${DPE_FAILOVER_URI}
+  appid: ${DPE_FAILOVER_APPID}
+cnc-ms:
+  host: ${CNC_HOST}
+  uri: ${CNC_URI}
+  x-api-key: ${DPE_CNC_XAPI_KEY}
+cnc-dpe:
+  host: ${CNC_DPE_HOST}
+  uri: ${CNC_DPE_URI}
+  api-id: ${DPE_CNC_API_KEY}
+ssm-store:
+  host: ${SSM_STORE_HOST}
+  uri: ${SSM_STORE_URI}
+  x-api-key: ${SSM_STORE_APIKEY}
+  secret: ${SSM_STORE_SECRET}
+  radius: ${SSM_STORE_RADIUS}
+  page: ${SSM_STORE_PAGE}
+  pageSize: ${SSM_STORE_PAGE_SIZE}
+pudo-aggregator:
+  host: ${PUDO_AGG_HOST}
+  uri: ${PUDO_AGG_URI}
+  radius: ${PUDO_AGG_RADIUS}
+  authorization: ${PUDO_AGG_AUTHORIZATION}
+pudo-id-aggregator:
+  host: ${PUDO_AGG_HOST}
+  uri: ${PUDO_ID_AGG_URI}
+pudo-aggregator-store:
+  host: ${PUDO_AGG_HOST}
+  uri: ${PUDO_AGG_STORE_URI}
+  authorization: ${PUDO_AGG_AUTHORIZATION}
+  page: ${PUDO_AGG_STORE_PAGE}
+geocode:
+  host: ${GOOGLE_API_HOST}
+  uri: ${GOOGLE_API_URI}
+  key: ${GOOGLE_API_KEY}
+
+client:
+  retries: ${CONNECT_RETRIES:3}
+  connect-timeout: ${CONNECT_TIMEOUT:2000}
+  idle-timeout: ${IDLE_TIMEOUT:180000}
+  retry-delay-milis: ${RETRY_DELAY_MILIS:400}
+  response-timeout: ${RESPONSE_TIMEOUT:3000}
+  dpe-response-timeout: ${DPE_RESPONSE_TIMEOUT:10000}
+  circuit-breaker:
+    failure_rate_threshold: ${CIRCUIT_BREAKER_FAILURE_RATE:30}
+    duration_open_state_millis: ${CIRCUIT_BREAKER_OPEN_STATE_MS:120000}
+    permitted_number_of_calls_to_check_recovery: ${CIRCUIT_BREAKER_CHECK_CALLS:5}
+    sliding_window_size: ${CIRCUIT_BREAKER_SLIDING_WINDOW:10}
+    timeout_duration_millis: ${CIRCUIT_BREAKER_TIMEOUT_DURATION_MS:5000}
+info:
+  app:
+    env: ${ENVIRONMENT}
+    git_commit: ${GIT_COMMIT}
+    image: ${IMAGE}
+    db_name: ${POSTGRES_NAME}
+
+address-lines-postbox-config:
+  json-content: ${ADDRESS_LINES_POSTBOX-JSON-CONTENT}
+
+usps-shipping-method-config:
+  carriers: ${USPS-CARRIERS}
+  channels: ${CHANNELS}
+
+military-states-config:
+  json-content: ${MILITARY-STATES-JSON-CONTENT}

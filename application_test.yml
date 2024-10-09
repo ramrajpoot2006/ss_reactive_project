@@ -1,0 +1,138 @@
+server:
+  compression:
+    enabled: true
+spring:
+  r2dbc:
+    writer:
+      pool:
+        initial-size: 10
+        max-size: 20
+        max-idle-time-minutes: 30
+        max-create-conn-time-seconds: 10
+    reader:
+      pool:
+        initial-size: 10
+        max-size: 20
+        max-idle-time-minutes: 30
+        max-create-conn-time-seconds: 10
+    requests-mapping:
+      read-only:
+        methods:
+          - method: GET
+            pattern-string: "/**"
+          - method: POST
+            pattern-string: "/shipping-options"
+    username: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    maxLifeMillis: ${CONNECTION_MAX_LIFE:42200000}
+  flyway:
+    url: ${spring.datasource.url}
+    enabled: true
+    locations: "classpath:db/migration"
+  main:
+    web-application-type: reactive
+management:
+  metrics:
+    web:
+      client:
+        request:
+          metric-name: afn_fulfilment_service_http_client_requests
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  health:
+    r2dbc:
+      enabled: false
+client:
+  retries: ${CONNECT_RETRIES:3}
+  connect-timeout: ${CONNECT_TIMEOUT:2000}
+  idle-timeout: ${IDLE_TIMEOUT:180000}
+  retry-delay-milis: ${RETRY_DELAY_MILIS:400}
+  response-timeout: ${RESPONSE_TIMEOUT:3000}
+  dpe-response-timeout: ${DPE_RESPONSE_TIMEOUT:10000}
+  circuit-breaker:
+    failure_rate_threshold: ${CIRCUIT_BREAKER_FAILURE_RATE:30}
+    duration_open_state_millis: ${CIRCUIT_BREAKER_OPEN_STATE_MS:120000}
+    permitted_number_of_calls_to_check_recovery: ${CIRCUIT_BREAKER_CHECK_CALLS:5}
+    sliding_window_size: ${CIRCUIT_BREAKER_SLIDING_WINDOW:10}
+    timeout_duration_millis: ${CIRCUIT_BREAKER_TIMEOUT_DURATION_MS:3000}
+logging:
+  level:
+    com.domainname.next.shippingapi: TRACE
+    org:
+      postgres: ERROR
+  env: local
+  leanix-id: empty
+  logBody: false
+  sanitize:
+    headers: apiKey
+    query-param: apiKey
+deliverypromise:
+  host: https://eaistg.omnihub.3stripes.net
+  uri: eai/delivery/options/V2
+  appid: empty
+deliverypromise-ms:
+  host: https://stg-omnideliverypromise.api.3stripes.io
+  uri: getDeliveryOptions/v2
+  x-api-key: empty
+dpe-failover:
+  host: https://dev-omnihub.api.3stripes.io
+  uri: deliveryPromise/V2
+  appid: empty
+cnc-ms:
+  schema: https
+  host: https://stg-omnideliverypromise.api.3stripes.io
+  uri: /clickandcollect/options/v3
+  api-id: empty
+  x-api-key: empty
+cnc-dpe:
+  schema: https
+  host: https://stg-omnideliverypromise.api.3stripes.io
+  uri: /clickandcollect/options/v3
+  api-id: empty
+ssm-store:
+  host: https://stg-omni.api.3stripes.io
+  uri: ssm/stores
+  x-api-key: empty
+  secret: empty
+  radius: 50km
+  page: 0
+  pageSize: 20
+pudo-aggregator:
+  host: https://master-tf-pudo-aggregator.ecom-tf.deu01.k8s.anteater.dub.aws.k8s.3stripes.net
+  uri: location/search
+  authorization: Basic empty
+  radius: 25
+pudo-id-aggregator:
+  host: https://master-tf-pudo-aggregator.ecom-tf.deu01.k8s.anteater.dub.aws.k8s.3stripes.net
+  uri: location
+pudo-aggregator-store:
+  host: https://master-tf-pudo-aggregator.ecom-tf.deu01.k8s.anteater.dub.aws.k8s.3stripes.net
+  uri: store
+  authorization: Basic empty
+  page: 0
+geocode:
+  host: http://google-maps-proxy.ecom-tf.deu01.k8s.anteater.dub.aws.k8s.3stripes.net
+  uri: maps/api/geocode/json
+  key: empty
+
+info:
+  app:
+    env: ${logging.env}
+    git_commit: "1234"
+    image: "eft-wm-commerce-next/shipping-service:local"
+    db_name: "shipping"
+
+address-lines-postbox-config:
+  json-content: '{"PO Box","P.O","P. O","P O","P.o","p.o","p.O","po box","Post Office","PO box","p o BOX","p o Box","p o","P o","p O","P O BOX","PO BOX","POSTOFFICE","POST OFFICE","Po Box","post office","postoffice","p . O","p . o","P . O","P . o","Post office","Postbox","Post box","Post-box"}'
+
+usps-shipping-method-config:
+  carriers: '[{ "carrierString": "USP000US0000000000", "carrierService": "PP (Parcel Post)"}]'
+  channels: '{"domainnameConsumerApp","domainnameconfirmedapp","Web","mobile"}'
+
+military-states-config:
+  json-content: '{"AA","AE","AP"}'

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+  <springProfile name="disable-json-log">
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+  </springProfile>
+
+  <springProperty name="app.name" source="spring.application.name" />
+  <springProperty name="app.instanceId" source="eureka.instance.metadataMap.instanceId" />
+  <springProperty name="app.my_type" source="com.domainname.monitoring.my_type" />
+  <springProperty name="app.my_index" source="com.domainname.monitoring.my_index" />
+  <springProperty name="app.component" source="com.domainname.monitoring.component" />
+  <springProperty name="app.service" source="com.domainname.monitoring.service" />
+  <springProperty name="app.environment" source="com.domainname.monitoring.environment" />
+  <springProperty name="app.location" source="com.domainname.monitoring.location" />
+  <springProperty name="app.version" source="com.domainname.monitoring.version" />
+
+  <springProperty name="logEnv" source="logging.env" />
+  <springProperty name="serviceId" source="logging.leanix-id" />
+
+  <appender name="stash" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <timestamp /> <!-- Actual timestamp of the log entry-->
+        <mdc> <!-- MDC variables on the Thread will be written as JSON fields-->
+          <mdcKeyFieldName>trace_id=traceId</mdcKeyFieldName>
+          <mdcKeyFieldName>span_id=spanId</mdcKeyFieldName>
+          <mdcKeyFieldName>trace_flags=traceFlags</mdcKeyFieldName>
+        </mdc>
+        <!-- Outputs entries from logback's context -->
+        <context />
+        <!-- Logstash json format version, the @version field in the output -->
+        <version />
+        <logLevel />
+        <loggerName />
+        <stackTrace>
+          <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+            <maxDepthPerThrowable>40</maxDepthPerThrowable>
+            <maxLength>2048</maxLength>
+            <shortenedClassNameLength>80</shortenedClassNameLength>
+            <exclude>reactor.*</exclude>
+            <exclude>io.netty.*</exclude>
+            <exclude>org.springframework.*</exclude>
+            <rootCauseFirst>true</rootCauseFirst>
+          </throwableConverter>
+        </stackTrace>
+        <pattern>
+          <omitEmptyFields>true</omitEmptyFields>
+          <pattern>
+            {
+            "labels": { "env": "${logEnv}" },
+            "service": { "id": "${serviceId}" },
+            "logger":"%logger",
+            "thread":"%thread"
+            }
+          </pattern>
+        </pattern>
+
+        <threadName />
+        <message />
+
+        <!-- Useful so we can add extra information for specific log lines as Markers -->
+        <logstashMarkers />
+        <!-- or through StructuredArguments -->
+        <arguments />
+      </providers>
+    </encoder>
+  </appender>
+
+  <springProfile name="!disable-json-log">
+    <root level="INFO">
+      <appender-ref ref="stash" />
+    </root>
+    <logger name="org.springframework" level="INFO" />
+    <logger name="com.domainname" level="INFO" />
+  </springProfile>
+</configuration>
